@@ -67,7 +67,7 @@ double value_of_cos(std::pair<double, double> prev, std::pair<double, double> cu
 }
 
 class reduce_par {
-public:
+ public:
     int next;
     double len;
     std::vector<std::pair<double, double>> points;
