@@ -3,8 +3,8 @@
 #include <gtest/gtest.h>
 #include <vector>
 #include <utility>
-#include "./jarvis_tbb.h"
 #include <algorithm>
+#include "./jarvis_tbb.h"
 
 TEST(Jarvis_TBB, Test_On_3_Points_EQ) {
     size_t size = 3;
