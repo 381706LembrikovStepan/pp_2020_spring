@@ -67,7 +67,7 @@ double value_of_cos(std::pair<double, double> prev, std::pair<double, double> cu
 }
 
 class reduce_par {
-public:
+ public:
     int next;
     double len;
     std::vector<std::pair<double, double>> points;
@@ -111,8 +111,7 @@ public:
                     min_local = cur_cos;
                     len = len2;
                     next = i;
-                }
-                else if (cur_cos == min_local) {
+                } else if (cur_cos == min_local) {
                     if (len < len2) {
                         next = i;
                         len = len2;
@@ -122,8 +121,7 @@ public:
             cur_cos = value_of_cos(prev_p, cur_p, base_p);
             if (cur_cos < min_local) {
                 next = base_id;
-            }
-            else if (cur_cos == min_local) {
+            } else if (cur_cos == min_local) {
                 if (len < len2) {
                     next = base_id;
                 }
@@ -156,7 +154,8 @@ public:
         next(0), len(0), points(x), Convex_Hull(l), pr_p(y), cur_p(z), base_id(id), base_po(p) {}
 };
 
-tbb::concurrent_vector<std::pair<double, double>> Jarvis_Tbb(std::vector<std::pair<double, double>> points, int num_thr) {
+tbb::concurrent_vector<std::pair<double, double>> Jarvis_Tbb(std::vector<std::pair<double, double>> points,
+    int num_thr) {
     size_t size = points.size();
     size_t base_id = 0;
     tbb::concurrent_vector<std::pair<double, double>> Convex_Hull(1);

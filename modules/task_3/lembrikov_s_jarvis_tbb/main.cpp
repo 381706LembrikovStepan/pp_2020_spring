@@ -4,6 +4,7 @@
 #include <vector>
 #include <utility>
 #include "./jarvis_tbb.h"
+#include <algorithm>
 
 TEST(Jarvis_TBB, Test_On_3_Points_EQ) {
     size_t size = 3;
@@ -127,7 +128,7 @@ TEST(Jarvis_TBB, Test_On_Negative_Points_EQ) {
     answer_tbb_conc_vec = Jarvis_Tbb(a, num_thr);
     answer_seq = Jarvis_Seq(a);
     std::copy(answer_tbb_conc_vec.begin(), answer_tbb_conc_vec.end() - 1, std::back_inserter(answer_tbb_vec));
-    
+
     EXPECT_EQ(answer_seq, answer_tbb_vec);
 }
 
