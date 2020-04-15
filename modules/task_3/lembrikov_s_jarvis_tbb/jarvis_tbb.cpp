@@ -8,7 +8,7 @@
 std::vector<std::pair<double, double>> getRandomPoints(int n) {
     std::vector<std::pair<double, double>> a(n);
     std::mt19937 gen(n);
-    std::uniform_real_distribution<> urd(0, 100);
+    std::uniform_int_distribution<int> urd(0, 1000000);
     for (int i = 0; i < n; i++) {
         a[i].first = urd(gen);
         a[i].second = urd(gen);
@@ -67,11 +67,11 @@ double value_of_cos(std::pair<double, double> prev, std::pair<double, double> cu
 }
 
 class reduce_par {
- public:
+public:
     int next;
     double len;
     std::vector<std::pair<double, double>> points;
-    std::vector<std::pair<double, double>> Convex_Hull;
+    tbb::concurrent_vector<std::pair<double, double>> Convex_Hull;
     std::pair<double, double > pr_p;
     std::pair<double, double > cur_p;
     int base_id;
@@ -101,6 +101,7 @@ class reduce_par {
                 len2 = sqrt(pow((xloc[i].first - cur_p.first), 2) + pow((xloc[i].second - cur_p.second), 2));
                 scalar = ((prev_p.first - cur_p.first) * (xloc[i].first - cur_p.first) +
                     (prev_p.second - cur_p.second) * (xloc[i].second - cur_p.second));
+
                 if ((len1 == 0) || (len2 == 0))
                     cur_cos = 1.1;
                 else
@@ -110,23 +111,23 @@ class reduce_par {
                     min_local = cur_cos;
                     len = len2;
                     next = i;
-                } else if (cur_cos == min_local) {
+                }
+                else if (cur_cos == min_local) {
                     if (len < len2) {
                         next = i;
                         len = len2;
                     }
                 }
             }
-
             cur_cos = value_of_cos(prev_p, cur_p, base_p);
             if (cur_cos < min_local) {
                 next = base_id;
-            } else if (cur_cos == min_local) {
+            }
+            else if (cur_cos == min_local) {
                 if (len < len2) {
                     next = base_id;
                 }
             }
-
             Convex_Hull_Local.push_back(xloc[next]);
             flag_h++;
             prev_p.first = cur_p.first;
@@ -139,13 +140,7 @@ class reduce_par {
             Convex_Hull_Local.pop_back();
         }
 
-        int size = Convex_Hull_Local.size();
-        std::pair<double, double > buf;
-
-        for (int i = 0; i < size; i++) {
-            buf = Convex_Hull_Local[i];
-            Convex_Hull.push_back(buf);
-        }
+        std::copy(Convex_Hull_Local.begin(), Convex_Hull_Local.end(), std::back_inserter(Convex_Hull));
     }
 
     reduce_par(const reduce_par& r, tbb::split) :
@@ -153,28 +148,25 @@ class reduce_par {
         pr_p(r.pr_p), cur_p(r.cur_p), base_id(r.base_id), base_po(r.base_po) {}
 
     void join(const reduce_par& r) {
-        int size = r.Convex_Hull.size();
-        std::pair<double, double > buf;
-
-        for (int i = 0; i < size; i++) {
-            buf = r.Convex_Hull[i];
-            Convex_Hull.push_back(buf);
-        }
+        std::copy(r.Convex_Hull.begin(), r.Convex_Hull.end(), std::back_inserter(Convex_Hull));
     }
-    reduce_par(std::vector<std::pair<double, double>> x, std::vector<std::pair<double, double>> l,
+
+    reduce_par(std::vector<std::pair<double, double>> x, tbb::concurrent_vector<std::pair<double, double>> l,
         std::pair<double, double> y, std::pair<double, double> z, int id, std::pair<double, double> p) :
         next(0), len(0), points(x), Convex_Hull(l), pr_p(y), cur_p(z), base_id(id), base_po(p) {}
 };
 
-std::vector<std::pair<double, double>> Jarvis_Tbb(std::vector<std::pair<double, double>> points, int num_thr) {
+tbb::concurrent_vector<std::pair<double, double>> Jarvis_Tbb(std::vector<std::pair<double, double>> points, int num_thr) {
     size_t size = points.size();
     size_t base_id = 0;
-    std::vector<std::pair<double, double>> Convex_Hull(1);
+    tbb::concurrent_vector<std::pair<double, double>> Convex_Hull(1);
     std::pair<double, double> cur_p;
     std::pair<double, double> prev_p;
 
     if (size < 3) {
-        Convex_Hull = Jarvis_Seq(points);
+        std::vector<std::pair<double, double>> Convex_Hull_Seq;
+        Convex_Hull_Seq = Jarvis_Seq(points);
+        std::copy(Convex_Hull_Seq.begin(), Convex_Hull_Seq.end(), Convex_Hull.begin());
     } else {
         for (size_t i = 1; i < size; i++) {
             if (points[i].second < points[base_id].second) {
@@ -190,7 +182,6 @@ std::vector<std::pair<double, double>> Jarvis_Tbb(std::vector<std::pair<double, 
         prev_p.second = Convex_Hull[0].second;
         int flag_h = 1;
         std::pair<double, double> base_p = cur_p;
-
         reduce_par r(points, Convex_Hull, prev_p, cur_p, base_id, base_p);
         tbb::task_scheduler_init init(num_thr);
         int grainsize = size / num_thr + size % num_thr;
@@ -249,11 +240,6 @@ std::vector<std::pair<double, double>> Jarvis_Tbb(std::vector<std::pair<double, 
             pr_p.second = cur_p.second;
             cur_p = points_last[next];
         } while (cur_p != Convex_Hull[0]);
-
-        if (flag_h > 1) {
-            flag_h--;
-            Convex_Hull.pop_back();
-        }
     }
 
     return Convex_Hull;

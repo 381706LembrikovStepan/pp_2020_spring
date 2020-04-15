@@ -14,6 +14,6 @@ double value_of_cos(std::pair<double, double> prev, std::pair<double, double> cu
 std::vector<std::pair<double, double>> getRandomPoints(int n);
 std::vector<std::pair<double, double>> getNegativePoints(int n);
 std::vector<std::pair<double, double>> Jarvis_Seq(std::vector<std::pair<double, double>> points);
-std::vector<std::pair<double, double>> Jarvis_Tbb(std::vector<std::pair<double, double>> points, int num_thr);
+tbb::concurrent_vector<std::pair<double, double>> Jarvis_Tbb(std::vector<std::pair<double, double>> points, int num_thr);
 
 #endif  // MODULES_TASK_3_LEMBRIKOV_S_JARVIS_TBB_JARVIS_TBB_H_
